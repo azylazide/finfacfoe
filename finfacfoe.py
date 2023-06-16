@@ -16,10 +16,10 @@ logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-DISCORD_GUILD = os.getenv("DISCORD_GUILD")
-DISCORD_GUILD_ID = discord.Object(id=os.getenv("DISCORD_GUILD_ID"))
-VALID_CHANNEL_ID = os.getenv("VALID_CHANNEL_ID")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN2")
+DISCORD_GUILD = os.getenv("DISCORD_GUILD2")
+DISCORD_GUILD_ID = discord.Object(id=os.getenv("DISCORD_GUILD_ID2"))
+VALID_CHANNEL_ID = os.getenv("VALID_CHANNEL_ID2")
 
 intents = discord.Intents.default()
 intents.members = True
@@ -339,7 +339,7 @@ class FinFacFoeGame():
             button_state = self.board[input.y][input.x]
             #Check if position is occupied
             if button_state in (self.X,self.O):
-                content = f"{self.get_challenger_text()}> Occupied spot"
+                content = f"{self.get_challenger_text()}> Occupied spot. Try again. ⛔"
                 self.public_view.children[self.button_to_index(input.x,input.y)].style = discord.ButtonStyle.gray
                 await interaction.response.edit_message(content=content, view=self.public_view)
                 return
@@ -347,13 +347,13 @@ class FinFacFoeGame():
             #PUBLIC should only be for X
             if self.current_player != self.X:
                 logging.info("silently ignore invalid turn")
-                content = f"{self.get_challenger_text()}> Not your turn"
+                content = f"{self.get_challenger_text()}> Not your turn ⏳"
                 await interaction.response.edit_message(content=content)
                 return
             #PUBLIC should only be to challenger member
             if not self.challenger == interaction.user:
                 logging.info("silently ignore invalid player")
-                await interaction.response.send_message(f"This is not your board {interaction.user.mention}", ephemeral=True,delete_after=3)
+                await interaction.response.send_message(f"This is not your board {interaction.user.mention} ⛔", ephemeral=True,delete_after=3)
                 return
 
             #Save input
@@ -374,20 +374,20 @@ class FinFacFoeGame():
                 self.public_view.children[index].style = discord.ButtonStyle.danger
                 self.public_view.children[index].label = "X"
                 self.public_view.children[index].disabled = True
-                await interaction.response.edit_message(content=f"{self.get_challenger_text()}> It is [O]'s Turn",view=self.public_view)
+                await interaction.response.edit_message(content=f"{self.get_challenger_text()}> It is [O]'s Turn ⏳",view=self.public_view)
 
                 #Update Private View
                 self.private_view.children[index].style = discord.ButtonStyle.danger
                 self.private_view.children[index].label = "X"
                 self.private_view.children[index].disabled = True
-                await self.private_msg.edit(content = f"{self.get_boardmaster_text()}> It is [O] your turn", view=self.private_view)
+                await self.private_msg.edit(content = f"{self.get_boardmaster_text()}> It is [O] your turn ✅✅✅", view=self.private_view)
 
                 logging.info("UI updated")
 
             else:
                 logging.info("Rule failed")
                 #only rule broken is no piece in middle at first turn
-                content = f"{self.get_challenger_text()}> Center position is prohibited on first turn. Try again."
+                content = f"{self.get_challenger_text()}> Center position is prohibited on first turn. Try again. ⛔"
                 await interaction.response.edit_message(content=content)
                 return
 
@@ -398,7 +398,7 @@ class FinFacFoeGame():
             #PRIVATE should only be for O
             if self.current_player != self.O:
                 logging.info("silently ignore invalid turn")
-                content = f"{self.get_challenger_text()}> Not your turn"
+                content = f"{self.get_challenger_text()}> Not your turn ⏳"
                 await interaction.response.edit_message(content=content)
                 return
             #PRIVATE is only visible to boardmaster
@@ -418,13 +418,13 @@ class FinFacFoeGame():
                 index = self.button_to_index(self.x,self.y)
 
                 #Update Public View
-                await self.public_msg.edit(content=f"{self.get_challenger_text()}> It is [X] your Turn",view=self.public_view)
+                await self.public_msg.edit(content=f"{self.get_challenger_text()}> It is [X] your Turn ✅✅✅",view=self.public_view)
 
                 #Update Private View
                 self.private_view.children[index].style = discord.ButtonStyle.success
                 self.private_view.children[index].label = "O"
                 self.private_view.children[index].disabled = True
-                await interaction.response.edit_message(content = f"{self.get_boardmaster_text()}> It is [X]'s turn", view=self.private_view)
+                await interaction.response.edit_message(content = f"{self.get_boardmaster_text()}> It is [X]'s turn ⏳", view=self.private_view)
 
                 logging.info("UI updated")
 
@@ -433,15 +433,18 @@ class FinFacFoeGame():
                 match self.bm_state:
                     case self.STATES.COL:
                         locked = "COL LOCKED"
+                        locked2 = "vertically ↕"
                     case self.STATES.ROW:
                         locked = "ROW LOCKED"
+                        locked2 = "horizontally ↔"
                     case self.STATES.FIXED:
                         locked = "AXIS LOCKED"
+                        locked2 = "perpendiculary ➕"
                     case self.STATES.FREE:
-                        content = f"{self.get_boardmaster_text()}> Center position is prohibited on first turn. Try again."
+                        content = f"{self.get_boardmaster_text()}> Center position is prohibited on first turn. Try again. ⛔"
                         await interaction.response.edit_message(content=content)
                         return
-                content = f"{self.get_boardmaster_text()}> You are {locked}. Try again."
+                content = f"{self.get_boardmaster_text()}> You are {locked}. Stay {locked2}. Try again. ⛔"
                 await interaction.response.edit_message(content=content)
                 return
         
@@ -457,7 +460,7 @@ class FinFacFoeGame():
 
                 await asyncio.sleep(0.5)
 
-                await self.public_msg.edit(content=f"{self.get_challenger_text()}> You win", view=self.private_view)
+                await self.public_msg.edit(content=f"{self.get_challenger_text()}> ✨ You win ✨", view=self.private_view)
                 await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> [X] wins", view=self.private_view)
                 
                 pass
@@ -468,7 +471,7 @@ class FinFacFoeGame():
                 await asyncio.sleep(0.5)
 
                 await self.public_msg.edit(content=f"{self.get_challenger_text()}> [O] wins", view=self.private_view)
-                await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> You win", view=self.private_view)
+                await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> ✨ You win ✨", view=self.private_view)
 
                 pass
             case self.TIE:
@@ -477,8 +480,8 @@ class FinFacFoeGame():
 
                 await asyncio.sleep(0.5)
 
-                await self.public_msg.edit(content=f"{self.get_challenger_text()}> TIE", view=self.private_view)
-                await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> TIE", view=self.private_view)
+                await self.public_msg.edit(content=f"{self.get_challenger_text()}> 🎈 TIE", view=self.private_view)
+                await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> 🎈 TIE", view=self.private_view)
         
         logging.info(f"\n{self.debug_board()}\n")
 
@@ -527,7 +530,7 @@ async def fin(interaction: discord.Interaction, challenger: discord.Member):
     public_view = FinFacFoeView(gamestate,True)
     private_view = FinFacFoeView(gamestate,False)
 
-    await interaction.response.send_message(f"{gamestate.boardmaster.display_name} challenged {gamestate.challenger.display_name}")
+    await interaction.response.send_message(f"{gamestate.boardmaster.display_name} challenged {gamestate.challenger.display_name} to FinFacFoe.")
     msg = await interaction.followup.send(f'{gamestate.get_challenger_text()}> \u200b', view = public_view)
     gamestate.public_view = public_view
     gamestate.public_msg = msg
