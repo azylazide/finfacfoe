@@ -2,7 +2,7 @@
 A discord.py bot that plays FinFacFoe
 by FIREFOX_FIN and Azyl
 
-![FinFacFoe](img.jpg)
+![FinFacFoe](img.png)
 
 ## FinFacFoe Rules
 - Only the boardmaster gets to see their moves
