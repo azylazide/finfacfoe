@@ -10,15 +10,16 @@ import math
 from enum import Enum
 import numpy as np
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
 
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN2")
-DISCORD_GUILD = os.getenv("DISCORD_GUILD2")
-DISCORD_GUILD_ID = discord.Object(id=os.getenv("DISCORD_GUILD_ID2"))
-VALID_CHANNEL_ID = os.getenv("VALID_CHANNEL_ID2")
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+DISCORD_GUILD = os.getenv("DISCORD_GUILD")
+DISCORD_GUILD_ID = discord.Object(id=os.getenv("DISCORD_GUILD_ID"))
+VALID_CHANNEL_ID = os.getenv("VALID_CHANNEL_ID")
 
 intents = discord.Intents.default()
 intents.members = True
@@ -317,17 +318,19 @@ class FinFacFoeGame():
 
         """
 
-        #Check if button is clickable
-        button_state = self.board[input.y][input.x]
-        #Check if position is occupied
-        if button_state in (self.X,self.O):
-            #Ignore callback #FIX THIS
-            return
-
         #-Valid button press-
 
         #PUBLIC
         if input.view.is_visible:
+            #Check if button is clickable
+            button_state = self.board[input.y][input.x]
+            #Check if position is occupied
+            if button_state in (self.X,self.O):
+                content = f"{self.get_challenger_text()}> Occupied spot"
+                self.public_view.children[self.button_to_index(input.x,input.y)].style = discord.ButtonStyle.gray
+                await interaction.response.edit_message(content=content, view=self.public_view)
+                return
+
             #PUBLIC should only be for X
             if self.current_player != self.X:
                 logging.info("silently ignore invalid turn")
@@ -374,6 +377,8 @@ class FinFacFoeGame():
 
         #PRIVATE
         else:
+            #Occupied button already disabled
+
             #PRIVATE should only be for O
             if self.current_player != self.O:
                 logging.info("silently ignore invalid turn")
@@ -430,6 +435,8 @@ class FinFacFoeGame():
                 logging.info("X wins")
                 self.disable_view()
 
+                await asyncio.sleep(0.5)
+
                 await self.public_msg.edit(content=f"{self.get_challenger_text()}> You win", view=self.private_view)
                 await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> [X] wins", view=self.private_view)
                 
@@ -438,6 +445,8 @@ class FinFacFoeGame():
                 logging.info("O wins")
                 self.disable_view()
 
+                await asyncio.sleep(0.5)
+
                 await self.public_msg.edit(content=f"{self.get_challenger_text()}> [O] wins", view=self.private_view)
                 await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> You win", view=self.private_view)
 
@@ -445,6 +454,8 @@ class FinFacFoeGame():
             case self.TIE:
                 logging.info("TIE")
                 self.disable_view()
+
+                await asyncio.sleep(0.5)
 
                 await self.public_msg.edit(content=f"{self.get_challenger_text()}> TIE", view=self.private_view)
                 await self.private_msg.edit(content=f"{self.get_boardmaster_text()}> TIE", view=self.private_view)
@@ -485,7 +496,8 @@ class FinFacFoeButton(discord.ui.Button):
 #------------------------------
 
 def check_channel(interaction: discord.Interaction):
-    return interaction.channel.id == VALID_CHANNEL_ID
+    logging.info(f"{interaction.channel.id} {VALID_CHANNEL_ID}")
+    return interaction.channel.id == int(VALID_CHANNEL_ID)
 
 @client.tree.command()
 @app_commands.check(check_channel)
