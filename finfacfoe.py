@@ -121,9 +121,22 @@ class FinFacFoeGame():
 
         #Challenger turn
         if self.current_player == self.X:
-            #All places are valid as long as not occupied
-            logging.info("X moves are always valid if position is unoccupied") #FIX THIS
-            return True
+            #first turn for Challenger
+            if self.count == 0:
+                logging.info("First X turn")    
+                if self.x == 1 and self.y == 1:
+                    #Invalid move
+                    logging.info("First X move must not be in center")
+                    return False
+                else:
+                    #No restriction in other places
+                    logging.info("Valid X move")
+                    return True
+            #any other turn
+            else:
+                #All places are valid as long as not occupied
+                logging.info("X moves are always valid after first turn if position is unoccupied")
+                return True
         #Boardmaster turn
         else:
             if self.is_valid_bm_move():
@@ -372,8 +385,11 @@ class FinFacFoeGame():
                 logging.info("UI updated")
 
             else:
-                #All moves are assumed valid
-                pass
+                logging.info("Rule failed")
+                #only rule broken is no piece in middle at first turn
+                content = f"{self.get_challenger_text()}> Center position is prohibited on first turn. Try again."
+                await interaction.response.edit_message(content=content)
+                return
 
         #PRIVATE
         else:
@@ -421,6 +437,10 @@ class FinFacFoeGame():
                         locked = "ROW LOCKED"
                     case self.STATES.FIXED:
                         locked = "AXIS LOCKED"
+                    case self.STATES.FREE:
+                        content = f"{self.get_boardmaster_text()}> Center position is prohibited on first turn. Try again."
+                        await interaction.response.edit_message(content=content)
+                        return
                 content = f"{self.get_boardmaster_text()}> You are {locked}. Try again."
                 await interaction.response.edit_message(content=content)
                 return
